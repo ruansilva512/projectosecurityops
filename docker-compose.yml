@@ -1,0 +1,147 @@
+﻿version: '3.8'
+
+services:
+  # Wazuh Stack - Usando a versão estável 4.8.0
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.8.0
+    container_name: wazuh-indexer
+    ports:
+      - "9200:9200"
+    volumes:
+      # Os certificados serão gerados em /vagrant/wazuh-docker/certs e montados aqui
+      - ./wazuh-docker/certs/certs.zip:/tmp/certs.zip:ro # Temporário para certs gerados
+      - ./wazuh-docker/certs/ca.pem:/usr/share/wazuh-indexer/config/certs/ca.pem:ro
+      - ./wazuh-docker/certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem:ro
+      - ./wazuh-docker/certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem:ro
+      - ./wazuh-docker/certs/indexer.pem:/usr/share/wazuh-indexer/config/certs/indexer.pem:ro
+      - ./wazuh-docker/certs/indexer-key.pem:/usr/share/wazuh-indexer/config/certs/indexer-key.pem:ro
+      - indexer_data:/usr/share/wazuh-indexer/data # Volume para dados persistentes
+      # Configuração do Indexer (pode ser ajustada para incluir segurança se não for automático)
+      - ./config/wazuh_cluster/wazuh-indexer.yml:/usr/share/wazuh-indexer/config/wazuh-indexer.yml:ro
+    environment:
+      # Aumentado a memória para o Indexer (deve ser ajustado conforme a RAM da VM)
+      - "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" 
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s --max-time 3 -k https://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 50
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.8.0
+    container_name: wazuh-manager
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy # Espera o Indexer estar saudável
+    ports:
+      - "1514:1514/udp" # Agentes
+      - "1515:1515/tcp" # Agentes (registration)
+    volumes:
+      - ./config/wazuh_cluster/wazuh.yml:/usr/share/wazuh-manager/etc/ossec.conf:ro # Configuração do manager
+      - manager_data:/var/ossec # Volume para dados persistentes
+      - ./wazuh-docker/certs/ca.pem:/var/ossec/etc/certs/ca.pem:ro
+      - ./wazuh-docker/certs/manager.pem:/var/ossec/etc/certs/manager.pem:ro
+      - ./wazuh-docker/certs/manager-key.pem:/var/ossec/etc/certs/manager-key.pem:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 50
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.8.0
+    container_name: wazuh-dashboard
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy # Espera o Indexer estar saudável
+    ports:
+      - "443:5601" # Acesso HTTPS ao Dashboard
+    volumes:
+      - ./config/wazuh_cluster/wazuh-dashboard.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro # Configuração do dashboard
+      - ./wazuh-docker/certs/ca.pem:/usr/share/wazuh-dashboard/config/certs/ca.pem:ro
+      - ./wazuh-docker/certs/dashboard.pem:/usr/share/wazuh-dashboard/config/certs/dashboard.pem:ro
+      - ./wazuh-docker/certs/dashboard-key.pem:/usr/share/wazuh-dashboard/config/certs/dashboard-key.pem:ro
+    environment:
+      OPENSEARCH_HOSTS: '["https://wazuh-indexer:9200"]' # Acesso ao Indexer via nome de serviço Docker
+      SERVER_HOST: '0.0.0.0' # Permite acesso externo
+      # As credenciais admin/password são definidas durante a geração de certificados
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s --max-time 3 -k https://localhost:5601 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 50
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning # Para dashboards e datasources
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  # Security Tools
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: suricata
+    network_mode: host # Apenas funciona em Linux hosts ou se a VM estiver em modo bridged
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    volumes:
+      - ./suricata_logs:/var/log/suricata # Para logs de saída
+      # Exemplo de montagem de configuração Suricata (precisa de ser criada)
+      # - ./config/suricata.yaml:/etc/suricata/suricata.yaml:ro
+    # Comando de execução do Suricata (descomentar e configurar se necessário)
+    # command: ["suricata", "-c", "/etc/suricata/suricata.yaml", "-i", "eth0"] # Exemplo: -i eth0 para monitorizar a interface eth0
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep suricata > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  # UI Flask
+  flask_ui:
+    build: ./flask_app
+    container_name: flask_ui
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  indexer_data: # Volume para persistir os dados do OpenSearch
+  manager_data: # Volume para persistir os dados do Wazuh Manager

@@ -1,0 +1,19 @@
+﻿# Este ficheiro é um placeholder.
+# As configurações reais para o wazuh-dashboard (opensearch_dashboards.yml)
+# devem ser preenchidas para configurar o acesso ao Indexer e a segurança.
+# Exemplo de conteúdo (NÃO USE SEM PREENCHER COM AS CONFIGURAÇÕES CORRETAS):
+#
+# server.host: "0.0.0.0"
+# opensearch.hosts: ["https://wazuh-indexer:9200"]
+# opensearch.ssl.verificationMode: certificate
+# opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/config/certs/ca.pem"]
+# opensearch.ssl.key: /usr/share/wazuh-dashboard/config/certs/dashboard-key.pem
+# opensearch.ssl.certificate: /usr/share/wazuh-dashboard/config/certs/dashboard.pem
+# opensearch.username: kibanaserver # ou "admin" se usar o utilizador padrão
+# opensearch.password: your_generated_password # A password gerada
+#
+# wazuh.security.enabled: true
+# wazuh.security.api.base_url: "https://wazuh-manager:55000"
+# wazuh.security.api.username: wazuh-wui
+# wazuh.security.api.password: your_api_password # Password da API do Wazuh Manager
+#

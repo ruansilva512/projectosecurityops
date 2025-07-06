@@ -1,0 +1,27 @@
+﻿groups:
+  - name: system-alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: rate(node_cpu_seconds_total{mode="system"}[1m]) > 0.8 # Adjusted threshold for typical VM usage
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Uso de CPU alto detectado na VM"
+          description: "O uso do CPU do sistema excedeu 80% nos últimos 60 segundos."
+      - alert: LowDiskSpace
+        expr: node_filesystem_avail_bytes{fstype="ext4",mountpoint="/"} / node_filesystem_size_bytes{fstype="ext4",mountpoint="/"} < 0.10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pouco espaço em disco na VM"
+          description: "Espaço em disco disponível em {{ .mountpoint }} está abaixo de 10%."
+      - alert: OutOfMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Memória RAM baixa na VM"
+          description: "Memória RAM disponível na VM está abaixo de 15%."

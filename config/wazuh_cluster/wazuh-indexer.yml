@@ -1,0 +1,17 @@
+﻿# Este ficheiro é um placeholder.
+# As configurações reais para o wazuh-indexer (Opensearch)
+# incluem configurações de segurança, rede e caminhos para os certificados.
+# Estas são geralmente geradas pelo script oficial de geração de certificados
+# do Wazuh-Docker ou devem ser adicionadas manualmente após a geração dos mesmos.
+# Exemplo de conteúdo (NÃO USE SEM PREENCHER COM OS CAMINHOS CORRETOS DOS CERTIFICADOS):
+#
+# plugins.security.ssl.http.enabled: true
+# plugins.security.ssl.http.pemtrustedcas_filepath: certs/ca.pem
+# plugins.security.ssl.http.pemcert_filepath: certs/indexer.pem
+# plugins.security.ssl.http.pemkey_filepath: certs/indexer-key.pem
+#
+# cluster.name: opensearch
+# node.name: wazuh-indexer
+# network.host: 0.0.0.0
+# discovery.seed_hosts: ["wazuh-indexer"] # Self-discovery for single node
+# cluster.initial_master_nodes: ["wazuh-indexer"]

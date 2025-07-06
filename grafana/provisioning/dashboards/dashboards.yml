@@ -1,0 +1,10 @@
+﻿apiVersion: 1
+providers:
+  - name: 'Default' # Nome do provedor
+    orgId: 1
+    folder: '' # Pasta raiz para os dashboards
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json # Onde os arquivos JSON dos dashboards serão colocados

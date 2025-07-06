@@ -1,0 +1,80 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #e0f7fa 0%, #c8e6c9 100%); /* Light, clean gradient background */
+    color: #34495e; /* Darker text for readability */
+    line-height: 1.6;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white background */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Softer shadow */
+    padding: 3rem;
+}
+
+h1 {
+    font-weight: 700;
+    color: #007bff; /* Primary brand color */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.lead {
+    color: #555;
+}
+
+.service-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transition for hover */
+    border-radius: 10px;
+    overflow: hidden; /* Ensures no content spills out on hover effects */
+}
+
+.service-card:hover {
+    transform: translateY(-5px) scale(1.02); /* Slight lift and zoom on hover */
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); /* More pronounced shadow on hover */
+}
+
+.card-title {
+    font-weight: 600;
+    color: #28a745; /* Success color for service titles */
+}
+
+.btn-outline-primary {
+    border-color: #007bff;
+    color: #007bff;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #fff;
+    transform: scale(1.05); /* Slight button enlargement on hover */
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animated-card {
+    animation: fadeIn 1s ease-out forwards;
+}
+
+.animated-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0; /* Start invisible */
+}
+
+/* Delay for sequential animation of cards */
+.service-card:nth-child(1) { animation-delay: 0.2s; }
+.service-card:nth-child(2) { animation-delay: 0.4s; }
+.service-card:nth-child(3) { animation-delay: 0.6s; }
+.service-card:nth-child(4) { animation-delay: 0.8s; }
+/* Add more if you have more services dynamically */

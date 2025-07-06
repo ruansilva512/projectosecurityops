@@ -1,0 +1,23 @@
+﻿global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  alerting:
+    alertmanagers:
+      - static_configs:
+          - targets: ['localhost:9093'] # Default Alertmanager port if configured
+rule_files:
+  - "alert.rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'node_exporter' # Assume you might add a node_exporter later
+    static_configs:
+      - targets: ['localhost:9100'] # Default node_exporter port
+  - job_name: 'cadvisor' # Assume you might add cadvisor for Docker metrics
+    static_configs:
+      - targets: ['localhost:8080'] # Default cAdvisor port
+  - job_name: 'suricata_exporter' # If a Suricata Prometheus exporter is used
+    static_configs:
+      - targets: ['localhost:9175']

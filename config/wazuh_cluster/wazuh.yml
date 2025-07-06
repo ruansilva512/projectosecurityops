@@ -1,0 +1,15 @@
+﻿# Este ficheiro é um placeholder.
+# As configurações reais para o wazuh-manager (ossec.conf)
+# devem ser preenchidas para integrar com o Wazuh Indexer e outros componentes.
+# Exemplo de conteúdo (NÃO USE SEM PREENCHER COM AS CONFIGURAÇÕES CORRETAS):
+#
+# <ossec_config>
+#   <output>
+#     <server>
+#       <address>wazuh-indexer</address> # Nome do serviço do Indexer no Docker Compose
+#       <port>55000</port>
+#       <protocol>tcp</protocol>
+#     </server>
+#   </output>
+#   ...
+# </ossec_config>
