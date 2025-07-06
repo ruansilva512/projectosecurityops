@@ -1,81 +1,71 @@
-﻿# Makefile para facilitar a gestão do ambiente AutoSOC+
+# Makefile para gestão simplificada do ambiente AutoSOC+ (v2.0)
+# Comentários iniciados com ## serão usados para gerar a ajuda.
 
-# Inicia a VM e todos os serviços Docker.
-up:
-	@echo "Iniciando a VM e a stack de serviços..."
+.DEFAULT_GOAL := help
+
+# Cores para o output
+GREEN  := $(shell tput -T xterm setaf 2)
+YELLOW := $(shell tput -T xterm setaf 3)
+RESET  := $(shell tput -T xterm sgr0)
+
+## GESTÃO DO AMBIENTE
+up: ## Inicia a VM e provisiona todos os serviços (Wazuh, etc.). O comando principal.
+	@echo "$(YELLOW)-> Iniciando e provisionando o ambiente AutoSOC+...$(RESET)"
+	@echo "$(YELLOW)-> Este processo é automático e pode demorar vários minutos na primeira vez.$(RESET)"
 	vagrant up --provision
-	@echo "Aguardando 30 segundos para a VM estabilizar..."
-	@powershell -Command "Start-Sleep -Seconds 30"
-	
 	@echo ""
-	@echo "=================================================================="
-	@echo "=== PASSO CRÍTICO: CONFIGURAÇÃO MANUAL DO WAZUH (CERTIFICADOS) ==="
-	@echo "=================================================================="
-	@echo "O Wazuh Indexer/Dashboard precisa de certificados SSL/TLS para funcionar."
-	@echo "Estes precisam ser gerados e configurados MANUALMENTE AGORA."
-	@echo ""
-	@echo "1. Conecte-se à VM via SSH:"
-	@echo "   make ssh"
-	@echo ""
-	@echo "2. Dentro da VM, navegue para a pasta 'wazuh-docker/single-node':"
-	@echo "   cd /vagrant/wazuh-docker/single-node"
-	@echo "   (NOTA: Se 'single-node' não existir, tente 'cd /vagrant/wazuh-docker/deployments/single-node' ou verifique o 'ls -F /vagrant/wazuh-docker'.)"
-	@echo ""
-	@echo "3. Edite o 'docker-compose.yml' para forçar as versões 4.8.0:"
-	@echo "   nano docker-compose.yml"
-	@echo "   (Altere 'image: wazuh/wazuh-indexer:' para 'wazuh/wazuh-indexer:4.8.0')"
-	@echo "   (Faça o mesmo para 'wazuh-manager' e 'wazuh-dashboard')"
-	@echo "   (Guarde e saia: Ctrl + X, Y, Enter)"
-	@echo ""
-	@echo "4. Gere os certificados e ANOTE A PASSWORD que aparecerá na consola:"
-	@echo "   docker compose -f generate-indexer-certs.yml run --rm generator"
-	@echo "   (A password também será guardada em /vagrant/wazuh_admin_password.txt na VM, acessível no seu host)"
-	@echo ""
-	@echo "5. Inicie APENAS a stack do Wazuh (nesta mesma pasta 'single-node'):"
-	@echo "   docker compose up -d"
-	@echo ""
-	@echo "6. Saia do SSH:"
-	@echo "   exit"
-	@echo ""
-	@echo "=================================================================="
-	@echo "=== DEPOIS DE COMPLETAR OS PASSOS ACIMA, CONTINUE NO HOST COM: ==="
-	@echo "=================================================================="
-	@echo "make continue-stack"
-	@echo ""
-	@exit 1 # Força o make up a falhar aqui, para que o utilizador execute os passos manuais
+	@echo "$(GREEN)Ambiente iniciado! Use 'make status' para ver os serviços.$(RESET)"
+	@echo "A password do Wazuh foi guardada em 'wazuh_admin_password.txt'."
 
-continue-stack:
-	@echo "Continuando a iniciar o restante da stack (Prometheus, Grafana, Suricata, Flask UI)..."
-	vagrant ssh -c "cd /vagrant && docker compose up -d"
-	@echo ""
-	@echo "[✔] AutoSOC+ configurado e iniciado!"
-	@echo "[i] Acesse os serviços via navegador:"
-	@echo "   - https://localhost:5601 (Wazuh Dashboard - use a password que anotou!)"
-	@echo "   - http://localhost:9090 (Prometheus)"
-	@echo "   - http://localhost:3000 (Grafana - user: admin, pass: admin)"
-	@echo "   - http://localhost:5000 (Flask UI)"
-
-# Para a VM e todos os serviços.
-down:
-	@echo "Parando todos os serviços Docker na VM..."
-	vagrant ssh -c "cd /vagrant && docker compose down"
-	@echo "Parando a VM..."
+down: ## Para a máquina virtual (sem apagar os dados).
+	@echo "$(YELLOW)-> Parando a VM...$(RESET)"
 	vagrant halt
 
-# Destrói a VM completamente.
-destroy:
-	@echo "Destruindo a VM! Todos os dados serão perdidos."
-	vagrant destroy -f
+destroy: ## ATENÇÃO: Destrói a VM completamente. Todos os dados dentro da VM serão perdidos.
+	@read -p "Tem a certeza que quer destruir a VM? [y/N] " choice; \
+	if [ "$$choice" = "y" ] || [ "$$choice" = "Y" ]; then \
+		echo "$(YELLOW)-> Destruindo a VM...$(RESET)"; \
+		vagrant destroy -f; \
+	else \
+		echo "Operação cancelada."; \
+	fi
 
-# Conecta-se à VM via SSH.
-ssh:
+ssh: ## Conecta-se à máquina virtual via SSH para executar comandos manuais.
 	vagrant ssh
 
-# Mostra o estado dos contentores Docker.
-status:
-	@echo "Verificando o estado dos contentores..."
-	vagrant ssh -c "cd /vagrant && docker compose ps"
+## GESTÃO DOS SERVIÇOS E TESTES
+status: ## Mostra o estado de todos os contentores Docker (Wazuh, Suricata, etc.).
+	@echo "$(YELLOW)-> Verificando o estado dos serviços Docker dentro da VM...$(RESET)"
+	@vagrant ssh -c "cd /vagrant && docker compose ps"
 
-# Mostra os logs de todos os serviços.
-logs:
+logs: ## Mostra os logs de TODOS os serviços em tempo real. Pressione Ctrl+C para sair.
+	@echo "$(YELLOW)-> A mostrar os logs de todos os serviços. Pressione Ctrl+C para sair.$(RESET)"
 	vagrant ssh -c "cd /vagrant && docker compose logs -f"
+
+test: ## Executa testes de conectividade para garantir que os serviços principais estão a funcionar.
+	@echo "$(YELLOW)-> Executando testes de conectividade nos serviços...$(RESET)"
+	@passed=0; \
+	services_to_test="Wazuh:https://localhost:5601 Prometheus:http://localhost:9090 Grafana:http://localhost:3000 FlaskUI:http://localhost:5000"; \
+	for service in $$services_to_test; do \
+		name=$${service%%:*}; \
+		url=$${service#*:}; \
+		printf "  - Testando %-12s em %-25s..." "$$name" "$$url"; \
+		status=$$(curl -k -s -o /dev/null -w "%{http_code}" $$url); \
+		if [ "$$status" -eq 200 ] || [ "$$status" -eq 302 ] || [ "$$status" -eq 401 ]; then \
+			echo "$(GREEN)OK (Status: $$status)$(RESET)"; \
+			passed=$$((passed+1)); \
+		else \
+			echo "$(RED)FALHOU (Status: $$status)$(RESET)"; \
+		fi; \
+	done;
+	@echo "$(YELLOW)-> Testes concluídos.$(RESET)"
+
+
+## AJUDA
+help: ## Mostra esta mensagem de ajuda com todos os os comandos disponíveis.
+	@echo "Comandos disponíveis para o ambiente AutoSOC+:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+
+.PHONY: up down destroy ssh status logs test help
