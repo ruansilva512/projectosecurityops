@@ -1,16 +1,16 @@
-﻿from flask import Flask, render_template, url_for
+# app.py
 
+from flask import Flask, render_template
+
+# Cria a aplicação Flask
 app = Flask(__name__)
 
+# Define a rota principal (a página inicial)
 @app.route('/')
-def index():
-    services = {
-        "Wazuh Dashboard": "https://localhost:5601",
-        "Prometheus": "http://localhost:9090",
-        "Grafana": "http://localhost:3000",
-        "Flask UI (this page)": "http://localhost:5000"
-    }
-    return render_template('index.html', services=services)
+def home():
+    # Pede ao Flask para encontrar 'index.html' na pasta 'templates' e mostrá-lo
+    return render_template('index.html')
 
+# Permite executar o servidor diretamente com 'python app.py'
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(debug=True) # debug=True ajuda no desenvolvimento
