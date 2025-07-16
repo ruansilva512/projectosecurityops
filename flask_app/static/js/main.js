@@ -65,77 +65,80 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     async function callGeminiAPI(prompt) {
-        // IMPORTANTE: Substitua 'SUA_API_KEY_GEMINI_AQUI' pela sua chave de API real.
-        const apiKey = 'AIzaSyAKouzJ_LWl7mmV7yeKYSTdsrabA-81HHo';
-        
-        if (!apiKey || apiKey === 'SUA_API_KEY_GEMINI_AQUI') {
-            throw new Error("A funcionalidade de IA está desativada. Para ativá-la, por favor insira uma chave de API válida no ficheiro main.js.");
-        }
-        
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-        
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Erro na API: ${response.status} ${await response.text()}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                throw new Error("Resposta da API inválida ou sem conteúdo.");
-            }
-        } catch (error) {
-            console.error("Erro ao chamar a API Gemini:", error);
-            throw error; // Propaga o erro para ser tratado pela função que chamou
-        }
-    }
-
-    const aiExplainerModal = document.getElementById('ai-explainer-modal');
-    const aiExplainerCloseBtn = document.getElementById('ai-modal-close-btn');
-    const aiModalResult = aiExplainerModal?.querySelector('#ai-modal-result');
-    const aiModalSpinner = aiExplainerModal?.querySelector('#ai-modal-spinner');
-
-    aiExplainerCloseBtn?.addEventListener('click', () => aiExplainerModal.classList.add('hidden'));
-
-    async function openAiExplainer(toolId) {
-        const tool = toolsData.find(t => t.id === toolId);
-        if (!tool || !aiExplainerModal) return;
-
-        aiExplainerModal.classList.remove('hidden');
-        aiModalResult.innerHTML = '';
-        aiModalSpinner.style.display = 'flex';
-
-        const aiModalContent = aiExplainerModal.querySelector('#ai-modal-content');
-        let contentHtml = `<h3 class="text-2xl font-bold mb-6">${tool.name} - Análise de Alertas</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
-        let combinedAlertContext = "";
-        tool.images.forEach(img => {
-            if (img.alert_context) {
-                contentHtml += `<div><img src="${img.src}" class="rounded-lg shadow-md mb-3" alt="${img.alt}"><p class="text-sm text-gray-600">${img.alt}</p></div>`;
-                combinedAlertContext += `- ${img.alt}: ${img.alert_context}\n`;
-            }
+    try {
+        // A chamada agora é para a nossa própria API no Flask, que atua como intermediário.
+        const response = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Enviamos o prompt num formato JSON, como o nosso servidor espera.
+            body: JSON.stringify({ prompt: prompt }) 
         });
-        contentHtml += '</div>';
-        aiModalContent.innerHTML = contentHtml;
-        
-        const prompt = `Como um analista de cibersegurança sénior, por favor, analise os seguintes alertas detetados: ${combinedAlertContext}. Forneça: 1. Uma **Explicação Simples**. 2. Uma **Análise de Risco**. 3. **Próximos Passos Recomendados**. Formate em Markdown.`;
-        
-        try {
-            const responseText = await callGeminiAPI(prompt);
-            aiModalResult.innerHTML = responseText.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        } catch (error) {
-            aiModalResult.innerHTML = `<div class="p-4 bg-red-100 border-l-4 border-red-500 text-red-700"><h4 class="font-bold">Erro de Comunicação</h4><p>${error.message}</p></div>`;
-        } finally {
-            aiModalSpinner.style.display = 'none';
+
+        // Recebemos a resposta do nosso servidor.
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Se o nosso servidor responder com um erro, mostramo-lo.
+            // A mensagem de erro vem do 'jsonify' no app.py.
+            throw new Error(data.error || `Erro no servidor: ${response.status}`);
         }
+
+        // Retornamos apenas o texto da resposta que o nosso servidor nos enviou.
+        return data.text;
+
+    } catch (error) {
+        console.error("Erro ao comunicar com o backend:", error);
+        // Propaga o erro para que a função `openAiExplainer` o possa mostrar na interface.
+        throw error;
     }
+}
+
+
+// As variáveis para controlar o modal permanecem as mesmas.
+const aiExplainerModal = document.getElementById('ai-explainer-modal');
+const aiExplainerCloseBtn = document.getElementById('ai-modal-close-btn');
+const aiModalResult = aiExplainerModal?.querySelector('#ai-modal-result');
+const aiModalSpinner = aiExplainerModal?.querySelector('#ai-modal-spinner');
+
+aiExplainerCloseBtn?.addEventListener('click', () => aiExplainerModal.classList.add('hidden'));
+
+
+// Esta função permanece praticamente igual, mas agora a sua chamada a `callGeminiAPI` é segura.
+async function openAiExplainer(toolId) {
+    const tool = toolsData.find(t => t.id === toolId);
+    if (!tool || !aiExplainerModal) return;
+
+    aiExplainerModal.classList.remove('hidden');
+    aiModalResult.innerHTML = '';
+    aiModalSpinner.style.display = 'flex';
+
+    const aiModalContent = aiExplainerModal.querySelector('#ai-modal-content');
+    let contentHtml = `<h3 class="text-2xl font-bold mb-6">${tool.name} - Análise de Alertas</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+    let combinedAlertContext = "";
+    tool.images.forEach(img => {
+        if (img.alert_context) {
+            contentHtml += `<div><img src="/static/img/${img.src.split('/').pop()}" class="rounded-lg shadow-md mb-3" alt="${img.alt}"><p class="text-sm text-gray-600">${img.alt}</p></div>`;
+            combinedAlertContext += `- ${img.alt}: ${img.alert_context}\n`;
+        }
+    });
+    contentHtml += '</div>';
+    aiModalContent.innerHTML = contentHtml;
+    
+    const prompt = `Como um analista de cibersegurança sénior, por favor, analise os seguintes alertas detetados: ${combinedAlertContext}. Forneça: 1. Uma **Explicação Simples**. 2. Uma **Análise de Risco**. 3. **Próximos Passos Recomendados**. Formate em Markdown.`;
+    
+    try {
+        // A chamada aqui é agora segura!
+        const responseText = await callGeminiAPI(prompt);
+        aiModalResult.innerHTML = responseText.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    } catch (error) {
+        // O erro que aparece aqui é o que foi enviado pelo nosso servidor Flask.
+        aiModalResult.innerHTML = `<div class="p-4 bg-red-100 border-l-4 border-red-500 text-red-700"><h4 class="font-bold">Erro de Comunicação</h4><p>${error.message}</p></div>`;
+    } finally {
+        aiModalSpinner.style.display = 'none';
+    }
+}
 
     function setupInteractiveTools() {
         const grid = document.getElementById('tools-grid');
