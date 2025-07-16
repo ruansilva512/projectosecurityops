@@ -29,7 +29,7 @@ Siga estes passos para configurar o projeto no seu ambiente local.
 **1. Clonar o Repositório**
 Abra um terminal e execute o seguinte comando:
 ```bash
-git clone [https://github.com/ruansilva512/projectosecurityops.git](https://github.com/ruansilva512/projectosecurityops.git)
+git clone https://github.com/ruansilva512/projectosecurityops.git
 cd projectosecurityops
 ```
 
