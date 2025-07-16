@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="antialiased h-full">
 
@@ -42,7 +42,7 @@
 
             <section id="hero-view" class="content-view active">
                  <div id="hero">
-                    <div class="video-hero-container"><video autoplay loop muted playsinline id="hero-video"><source src="./video/hero_background.mp4" type="video/mp4"></video></div>
+                    <div class="video-hero-container"><video autoplay loop muted playsinline id="hero-video"><source src="{{ url_for('static', filename='video/hero_background.mp4') }}" type="video/mp4"></video></div>
                     <div class="absolute inset-0 bg-black/40"></div>
                     <div class="z-10 text-center p-6"><h1 class="text-5xl md:text-8xl font-extrabold mb-6 leading-tight text-white tracking-tighter">A Segurança, <span class="text-[#86d8c3]">Reimaginada</span>.</h1><p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-200 mb-10">AutoSOC+ é uma plataforma de cibersegurança *open source*, totalmente automatizada. Agora com o poder da Inteligência Artificial.</p><a class="btn-primary px-10 py-4 text-lg font-bold rounded-lg shadow-xl" data-view="project-view" style="cursor:pointer;">Conheça o Futuro</a></div>
                  </div>
@@ -137,6 +137,6 @@
         </article>
     </template>
     
-    <script src="main.js" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
 </html>
