@@ -1,117 +1,85 @@
-# projectosecurityops
-Criado como projeto de estagio
-Resumo do Projeto: 
-1. Objetivo
-O objetivo deste projeto foi implementar um Centro de Operações de Segurança (SOC) open-source, totalmente funcional, para fins de estudo, laboratório e desenvolvimento. A stack permite a recolha, análise e visualização de eventos de segurança e métricas de performance, tudo num ambiente automatizado e fácil de gerir.
+# AutoSOC+ | Ambiente de Segurança Automatizado
 
-2. Arquitetura Final
-Após várias iterações para garantir a estabilidade, chegámos a uma arquitetura híbrida que combina a fiabilidade de uma instalação nativa com a flexibilidade dos contentores Docker.
+Bem-vindo ao AutoSOC+, uma plataforma de cibersegurança *open source* e totalmente automatizada, concebida para democratizar o acesso a ferramentas de segurança de nível profissional. Este projeto utiliza uma interface web moderna servida por um *backend* Flask e integra Inteligência Artificial para análise de alertas.
 
-Host: O seu PC com Windows, que gere a máquina virtual.
+## Pré-requisitos
 
-Guest (VM): Uma máquina virtual com Ubuntu 22.04 LTS é criada e gerida pelo Vagrant e VirtualBox.
+Antes de começar, garanta que tem o seguinte software instalado no seu sistema. Todos os links são para as páginas oficiais de download.
 
-Base de Dados (Nativa): O OpenSearch (o motor por trás do Wazuh Indexer) é instalado diretamente no Ubuntu da VM. Esta abordagem contornou os bugs de inicialização que encontrámos com a versão em contentor.
+* **Python (versão 3.8 ou superior)**
+    * Necessário para executar o servidor web Flask.
+    * [Transferir Python](https://www.python.org/downloads/)
 
-Serviços (Dockerizados): Todos os outros componentes da stack correm como contentores Docker, geridos por um único ficheiro docker-compose.yml. Isto inclui:
+* **Git**
+    * Necessário para clonar este repositório.
+    * [Transferir Git](https://git-scm.com/downloads)
 
-Wazuh Manager
+* **Vagrant**
+    * Ferramenta para criar e gerir os ambientes de máquinas virtuais.
+    * [Transferir Vagrant](https://developer.hashicorp.com/vagrant/downloads)
 
-Wazuh Dashboard
+* **VirtualBox**
+    * O *software* de virtualização que irá executar as máquinas virtuais geridas pelo Vagrant.
+    * [Transferir VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
-Prometheus
+## Instalação e Configuração
 
-Grafana
+Siga estes passos para configurar o projeto no seu ambiente local.
 
-Diagrama da Arquitetura:
+**1. Clonar o Repositório**
+Abra um terminal e execute o seguinte comando:
+```bash
+git clone [https://github.com/ruansilva512/projectosecurityops.git](https://github.com/ruansilva512/projectosecurityops.git)
+cd projectosecurityops
+```
 
-Fragmento do código
+**2. Criar e Ativar o Ambiente Virtual**
+É uma boa prática isolar as dependências do projeto.
+```bash
+# Criar o ambiente virtual
+python -m venv venv
 
-graph TD
-    subgraph "Seu PC (Windows)"
-        A[Utilizador] -->|Portas 5601, 3000, 9090| B(Vagrant + VirtualBox)
-    end
+# Ativar no Windows
+venv\Scripts\activate
 
-    subgraph "Máquina Virtual (Ubuntu 22.04)"
-        B --cria e gere--> C{VM}
-        subgraph C
-            D[OpenSearch - Nativo]
-            subgraph "Docker"
-                E[Wazuh Manager] --> D
-                F[Wazuh Dashboard] --> D
-                G[Prometheus]
-                H[Grafana] --> G
-            end
-        end
-    end
+# Ativar no macOS / Linux
+source venv/bin/activate
+```
 
-    style D fill:#cde,stroke:#333,stroke-width:2px
-3. Requisitos
-3.1. Requisitos de Máquina (PC Host - Windows)
+**3. Instalar as Dependências Python**
+Com o ambiente virtual ativo, instale todas as bibliotecas necessárias com um único comando:
+```bash
+pip install -r requirements.txt
+```
 
-Sistema Operativo: Windows 10 ou 11 (64-bit).
+**4. Configurar a Chave de API**
+Para que as funcionalidades de IA funcionem, precisa de fornecer a sua chave de API do Gemini.
 
-Processador (CPU): Um processador moderno com 4 ou mais núcleos. (Recomendado: 6+ núcleos, como o seu i7).
+* Crie um ficheiro chamado `.env` na raiz do projeto.
+* Dentro desse ficheiro, adicione a seguinte linha, substituindo pelo seu valor:
+    ```
+    GEMINI_API_KEY="A_SUA_CHAVE_DE_API_SECRETA_VAI_AQUI"
+    ```
 
-Memória (RAM): Mínimo absoluto de 16 GB. A nossa configuração final aloca 8 GB para a máquina virtual, deixando 8 GB para o Windows.
+**Importante:** O ficheiro `.env` contém informação sensível e não deve ser enviado para o GitHub. Para garantir isso, crie um ficheiro chamado `.gitignore` e adicione a seguinte linha:
+```
+# .gitignore
+venv/
+.env
+__pycache__/
+```
 
-Disco: SSD (altamente recomendado) para uma performance de arranque aceitável.
+## Execução
 
-Espaço em Disco: Pelo menos 50-60 GB de espaço livre.
+Com tudo configurado, inicie o servidor Flask:
 
-3.2. Requisitos de Software (Instalados pelo script)
+1.  Certifique-se de que o seu ambiente virtual está ativo.
+2.  Execute o seguinte comando no terminal:
+    ```bash
+    python app.py
+    ```
+3.  Abra o seu navegador e aceda a: **http://127.0.0.1:5000**
 
-O script de setup (setup-autosoc-final-v2.ps1) foi desenhado para verificar e instalar automaticamente todas as seguintes ferramentas no Windows usando o gestor de pacotes Chocolatey:
+O seu site AutoSOC+ deverá agora estar a funcionar localmente.
 
-Git: Para controlo de versões e usado pelo Git Bash.
-
-VirtualBox: O software que cria e corre a máquina virtual.
-
-Vagrant: A ferramenta que automatiza a criação e configuração da máquina virtual.
-
-Make: Uma ferramenta de automação que nos dá os comandos simples (make up, make down, etc.).
-
-4. Processo de Instalação (Totalmente Automatizado)
-O fluxo de trabalho final é extremamente simples:
-
-Executar o Script de Setup: Executar o ficheiro setup-autosoc-final-v2.ps1 uma única vez numa pasta vazia para criar toda a estrutura do projeto com os ficheiros já preenchidos.
-
-Iniciar o Ambiente: Navegar para a pasta autosoc-plus criada e executar um único comando: make up.
-
-Aguardar: O processo é totalmente automático e pode demorar entre 15 a 30 minutos na primeira vez. Ele cria a VM, instala o OpenSearch, gera uma password segura, inicializa a segurança e depois inicia todos os contentores Docker.
-
-5. Gestão do Ambiente
-A gestão do dia-a-dia é feita através de comandos simples no terminal Git Bash, dentro da pasta do projeto:
-
-make up: Liga e provisiona o ambiente.
-
-make down: Desliga a VM de forma segura (os dados são guardados).
-
-make status: Mostra o estado dos serviços.
-
-make logs: Mostra os logs de todos os serviços em tempo real.
-
-make credentials: Mostra a password de admin que foi gerada automaticamente.
-
-make destroy: Apaga completamente a máquina virtual.
-
-6. Credenciais de Acesso Finais
-Wazuh Dashboard:
-
-URL: https://localhost:5601
-
-Utilizador: admin
-
-Password: Gerada aleatoriamente e guardada no ficheiro credentials.txt (pode ser vista com make credentials).
-
-Grafana:
-
-URL: http://localhost:3000
-
-Utilizador: admin
-
-Password: admin (será pedido para alterar no primeiro login).
-
-Prometheus:
-
-URL: http://localhost:9090
+---
