@@ -1,6 +1,18 @@
-﻿FROM python:3.9-slim
+FROM python:3.9-slim
+
+# Define o diretório de trabalho
 WORKDIR /app
+
+# Copia o ficheiro de dependências e instala-as
+# Isto é feito primeiro para aproveitar o cache do Docker
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copia o resto dos ficheiros da aplicação
 COPY . .
-RUN pip install Flask requests # 'requests' is not strictly needed for this basic app but good to keep if you plan API calls
+
+# Expõe a porta que a aplicação vai usar
 EXPOSE 5000
+
+# Comando para correr a aplicação
 CMD ["python", "app.py"]
