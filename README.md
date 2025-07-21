@@ -1,85 +1,115 @@
-# AutoSOC+ | Ambiente de Segurança Automatizado
+# SimpleSOC | Ambiente de Segurança Automatizado
 
-Bem-vindo ao AutoSOC+, uma plataforma de cibersegurança *open source* e totalmente automatizada, concebida para democratizar o acesso a ferramentas de segurança de nível profissional. Este projeto utiliza uma interface web moderna servida por um *backend* Flask e integra Inteligência Artificial para análise de alertas.
+Bem-vindo ao SimpleSOC, uma plataforma de cibersegurança *open source* e totalmente automatizada, concebida para democratizar o acesso a ferramentas de segurança de nível profissional. Este projeto utiliza uma interface web moderna servida por um *backend* Flask e integra Inteligência Artificial para análise de alertas.
 
-## Pré-requisitos
+-----
+
+## 🚀 Pré-requisitos
 
 Antes de começar, garanta que tem o seguinte software instalado no seu sistema. Todos os links são para as páginas oficiais de download.
 
-* **Python (versão 3.8 ou superior)**
-    * Necessário para executar o servidor web Flask.
-    * [Transferir Python](https://www.python.org/downloads/)
+  * **Python (versão 3.8 ou superior)**
 
-* **Git**
-    * Necessário para clonar este repositório.
-    * [Transferir Git](https://git-scm.com/downloads)
+      * Necessário para executar o servidor web Flask.
+      * [Transferir Python](https://www.python.org/downloads/)
 
-* **Vagrant**
-    * Ferramenta para criar e gerir os ambientes de máquinas virtuais.
-    * [Transferir Vagrant](https://developer.hashicorp.com/vagrant/downloads)
+  * **Git**
 
-* **VirtualBox**
-    * O *software* de virtualização que irá executar as máquinas virtuais geridas pelo Vagrant.
-    * [Transferir VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+      * Necessário para clonar este repositório.
+      * [Transferir Git](https://git-scm.com/downloads)
 
-## Instalação e Configuração
+  * **Vagrant**
+
+      * Ferramenta para criar e gerir os ambientes de máquinas virtuais.
+      * [Transferir Vagrant](https://developer.hashicorp.com/vagrant/downloads)
+
+  * **VirtualBox**
+
+      * O *software* de virtualização que irá executar as máquinas virtuais geridas pelo Vagrant.
+      * [Transferir VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+
+  * **Make**
+
+      * Uma ferramenta de automação que orquestra a construção e gestão do ambiente. Já vem pré-instalado na maioria dos sistemas Linux e macOS. Para Windows, pode ser parte do Git Bash ou de ferramentas de desenvolvimento como o MSYS2.
+
+-----
+
+## ⚙️ Instalação e Configuração
 
 Siga estes passos para configurar o projeto no seu ambiente local.
 
-**1. Clonar o Repositório**
+### 1\. Clonar o Repositório
+
 Abra um terminal e execute o seguinte comando:
+
 ```bash
 git clone https://github.com/ruansilva512/projectosecurityops.git
 cd projectosecurityops
 ```
 
-**2. Criar e Ativar o Ambiente Virtual**
-É uma boa prática isolar as dependências do projeto.
-```bash
-# Criar o ambiente virtual
-python -m venv venv
+### 2\. Configurar a Chave de API (para funcionalidades de IA)
 
-# Ativar no Windows
-venv\Scripts\activate
-
-# Ativar no macOS / Linux
-source venv/bin/activate
-```
-
-**3. Instalar as Dependências Python**
-Com o ambiente virtual ativo, instale todas as bibliotecas necessárias com um único comando:
-```bash
-pip install -r requirements.txt
-```
-
-**4. Configurar a Chave de API**
 Para que as funcionalidades de IA funcionem, precisa de fornecer a sua chave de API do Gemini.
 
-* Crie um ficheiro chamado `.env` na raiz do projeto.
-* Dentro desse ficheiro, adicione a seguinte linha, substituindo pelo seu valor:
+  * Edite o ficheiro chamado `.env` na Pasta ./flask_app/
+
+  * Dentro desse ficheiro, modifique a seguinte linha, substituindo `A_SUA_CHAVE_DE_API_SECRETA_VAI_AQUI` pelo seu valor real:
+
     ```
     GEMINI_API_KEY="A_SUA_CHAVE_DE_API_SECRETA_VAI_AQUI"
     ```
 
-**Importante:** O ficheiro `.env` contém informação sensível e não deve ser enviado para o GitHub. Para garantir isso, crie um ficheiro chamado `.gitignore` e adicione a seguinte linha:
+
+## ▶️ Execução do Ambiente Completo (Docker & VM)
+
+O ambiente SimpleSOC é gerido através de comandos `make`, que automatizam a inicialização de todas as ferramentas de segurança em contêineres Docker dentro de uma Máquina Virtual Vagrant.
+
+**Nota:** As dependências Python para a interface Flask UI (passos 2 e 3 da seção "Instalação e Configuração" original) são agora tratadas **automaticamente pelo Dockerfile da aplicação Flask**, não sendo necessário criar e ativar um ambiente virtual Python separado no seu host para a execução da aplicação web. No entanto, o Python e Git são ainda pré-requisitos para o `Vagrantfile` e para a clonagem do repositório.
+
+### 1\. Iniciar o Ambiente Completo
+
+Este comando irá iniciar a VM, provisioná-la com Docker, gerar certificados para o Wazuh e subir todas as stacks de serviços (Wazuh, Prometheus, Grafana, Suricata, Flask UI).
+
+```bash
+make up
 ```
-# .gitignore
-venv/
-.env
-__pycache__/
-```
 
-## Execução
+Este processo pode demorar alguns minutos na primeira execução, pois o Vagrant irá descarregar a imagem da VM e o Docker irá descarregar as imagens dos contêineres.
 
-Com tudo configurado, inicie o servidor Flask:
+### 2\. Aceder aos Serviços
 
-1.  Certifique-se de que o seu ambiente virtual está ativo.
-2.  Execute o seguinte comando no terminal:
-    ```bash
-    python app.py
-    ```
-3.  Abra o seu navegador e aceda a: **http://127.0.0.1:5000**
+Assim que o comando `make up` for concluído com sucesso, os seguintes serviços estarão acessíveis no seu navegador:
 
-O seu site AutoSOC+ deverá agora estar a funcionar localmente.
+  * **Wazuh Dashboard (Kibana/OpenSearch Dashboards):**
 
----
+      * **URL:** `https://localhost:5601`
+      * **Credenciais:** `admin` / `SecretPassword` (ou a password que configurou para o Wazuh)
+      * *(Pode aparecer um aviso de segurança no navegador devido ao certificado autoassinado; aceite-o para continuar.)*
+
+  * **Prometheus:**
+
+      * **URL:** `http://localhost:9090`
+      * **Credenciais:** Não exige autenticação por padrão.
+
+  * **Grafana:**
+
+      * **URL:** `http://localhost:3000`
+      * **Credenciais:** `admin` / `admin` (será solicitado a alterá-la no primeiro login)
+
+  * **Flask UI (Sua Aplicação Web):**
+
+      * **URL:** `http://localhost:5000`
+      * **Credenciais:** Não exige autenticação por padrão.
+
+### 3\. Gerir o Ambiente com `make`
+
+Pode usar os seguintes comandos `make` para controlar o seu ambiente:
+
+  * **`make iniciar`**: Inicia apenas a stack adicional (Prometheus, Grafana, Suricata, Flask UI). Útil se a VM e o Wazuh já estiverem a correr e precisar de reiniciar só esta parte.
+  * **`make desligar`**: Para todos os serviços Docker em execução na VM e, em seguida, desliga a VM. Os dados persistentes nos volumes serão mantidos.
+  * **`make destruir`**: Destrói a VM completamente, removendo-a do VirtualBox e apagando todos os seus dados e contêineres. **Use com cautela, pois os dados serão perdidos\!**
+  * **`make ssh`**: Conecta-se à Máquina Virtual via SSH, permitindo-lhe executar comandos diretamente dentro do ambiente Linux.
+  * **`make status`**: Mostra o estado atual de todos os contêineres Docker em ambas as stacks (Wazuh e Adicional).
+  * **`make logs`**: Exibe os logs em tempo real de todos os serviços Docker, útil para depuração.
+
+-----
