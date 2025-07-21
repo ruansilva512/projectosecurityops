@@ -28,9 +28,34 @@ Antes de começar, garanta que tem o seguinte software instalado no seu sistema.
       * O *software* de virtualização que irá executar as máquinas virtuais geridas pelo Vagrant.
       * [Transferir VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
-  * **Make**
+  Make
 
-      * Uma ferramenta de automação que orquestra a construção e gestão do ambiente. Já vem pré-instalado na maioria dos sistemas Linux e macOS. Para Windows, pode ser parte do Git Bash ou de ferramentas de desenvolvimento como o MSYS2.
+Ferramenta de automação utilizada para orquestrar a construção e gestão do ambiente.
+
+Já vem pré-instalada na maioria dos sistemas Linux e macOS.
+
+Para utilizadores Windows:
+Recomendamos a instalação do make através do MSYS2:
+
+Transferir e instalar o MSYS2
+
+Abrir o terminal MSYS2 MSYS
+
+Atualizar os pacotes com:
+
+nginx
+Copiar
+Editar
+pacman -Syu
+(poderá ser necessário fechar e reabrir o terminal após a primeira atualização)
+
+Instalar o make com:
+
+go
+Copiar
+Editar
+pacman -S make
+Após a instalação, adiciona o caminho do make ao PATH do Windows, se necessário (por exemplo: C:\msys64\usr\bin).
 
 -----
 
